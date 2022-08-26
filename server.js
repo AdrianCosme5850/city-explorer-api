@@ -37,7 +37,7 @@ app.use((error, request, response, next) => {
 class Movie {
     constructor(movieData){
         this.title = movieData.original_title
-        this.poster = movieData.poster_path
+        this.poster ='https://image.tmdb.org/t/p/w500' + movieData.poster_path
     }
 }
 class Forecast {
