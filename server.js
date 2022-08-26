@@ -1,48 +1,27 @@
 'use strict';
 
-const express = require('express');
 require('dotenv').config();
+const express = require('express');
 const cors = require('cors');
-const axios = require('axios')
+const getMovies = require('./modules/movies.js')
+
+const weather = require('./modules/weather.js');
 const app = express();
-
-
 app.use(cors());
 
-const PORT = process.env.PORT || 3002;
+app.get('/weather', weatherHandler);
+app.get('/movie', getMovies)
 
-app.listen(PORT, () =>  console.log(`listening on ${PORT}`));
-app.get('/weather', async(request, response, next) => {
-    try{
-    let city = request.query.city;
-    let cityWeather = await axios.get(`http://api.weatherbit.io/v2.0/forecast/daily?key=${process.env.WEATHERBIT_API_KEY}&days=3&city=${city}`)
-    let cityForecast = cityWeather.data.data.map(dayForecast => new Forecast(dayForecast));
-    response.send(cityForecast)
-    } catch(error) {
-        next(error)
-    }
-} );
-app.get('/movie', async(request, response) => {
-        let city = request.query.city;
-        let movieData = await axios.get(`https://api.themoviedb.org/3/search/movie/?api_key=${process.env.MOVIE_API_KEY}&query=${city}`);
-        let cityMovies = movieData.data.results.map(cityMovie => new Movie(cityMovie))
-        response.send(cityMovies)
-    })
-app.get('*', (request, response) => {
-    response.send(`no route`)
-});
-app.use((error, request, response, next) => {
-    response.status(500).send(error.message);
-})
-class Movie {
-    constructor(movieData){
-        this.title = movieData.original_title
-        this.poster ='https://image.tmdb.org/t/p/w500' + movieData.poster_path
-    }
-}
-class Forecast {
-    constructor(weatherdata){
-        this.date = weatherdata.datetime
-        this.description = weatherdata.weather.description
-    }
-}
+function weatherHandler(request, response) {
+  const lat = request.query.lat;
+  const lon = request.query.lon;
+  console.log(lat, lon)
+  weather(lat, lon)
+  .then(summaries => response.send(summaries))
+  .catch((error) => {
+    console.error(error);
+    response.status(200).send('Sorry. Something went wrong!')
+  });
+}  
+
+app.listen(process.env.PORT, () => console.log(`Server up on ${process.env.PORT}`));
